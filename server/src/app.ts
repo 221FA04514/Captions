@@ -27,13 +27,31 @@ app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 app.use('/api', apiRouter);
 
 // --- Serve built frontend in production ---
-const clientDist = path.resolve(config.rootDir, 'client/dist');
-if (fs.existsSync(clientDist)) {
+const candidatePaths = [
+  path.resolve(config.rootDir, 'client/dist'),
+  path.resolve(process.cwd(), 'client/dist'),
+  path.resolve(__dirname, '../../../../client/dist'),
+  path.resolve(__dirname, '../../../client/dist'),
+  path.resolve(__dirname, '../../client/dist'),
+];
+
+let clientDist: string | null = null;
+for (const p of candidatePaths) {
+  if (fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'))) {
+    clientDist = p;
+    break;
+  }
+}
+
+if (clientDist) {
+  console.log(`[Frontend] Serving static frontend from: ${clientDist}`);
   app.use(express.static(clientDist));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(clientDist, 'index.html'));
+    res.sendFile(path.join(clientDist!, 'index.html'));
   });
+} else {
+  console.warn(`[Frontend] Warning: client/dist not found in candidates:`, candidatePaths);
 }
 
 // --- 404 handler for API routes ---

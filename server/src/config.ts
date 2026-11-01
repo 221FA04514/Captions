@@ -1,10 +1,34 @@
+import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { ensureDirectoryExists } from './utils/pathSecurity';
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+function findProjectRoot(): string {
+  // 1. Check if process.cwd() is project root
+  if (
+    fs.existsSync(path.join(process.cwd(), 'client')) &&
+    fs.existsSync(path.join(process.cwd(), 'server'))
+  ) {
+    return process.cwd();
+  }
+  // 2. Ascend from __dirname to locate root folder containing both client and server
+  let curr = __dirname;
+  for (let i = 0; i < 6; i++) {
+    if (
+      fs.existsSync(path.join(curr, 'client')) &&
+      fs.existsSync(path.join(curr, 'server'))
+    ) {
+      return curr;
+    }
+    const parent = path.dirname(curr);
+    if (parent === curr) break;
+    curr = parent;
+  }
+  return process.cwd();
+}
 
-const ROOT_DIR = path.resolve(__dirname, '../../');
+const ROOT_DIR = findProjectRoot();
+dotenv.config({ path: path.resolve(ROOT_DIR, '.env') });
 const STORAGE_BASE = path.resolve(ROOT_DIR, process.env.STORAGE_DIR || './storage');
 
 export const config = {

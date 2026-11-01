@@ -1,0 +1,21 @@
+{
+  "name": "bujjigadu-subtitle-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Professional subtitle studio with Telugu typography, live styling preview, and FFmpeg MP4 export",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"cyan,magenta\" \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm run dev --workspace=client",
+    "build": "npm run build --workspace=server && npm run build --workspace=client",
+    "start": "node server/dist/server/src/server.js",
+    "test": "npm run test --workspace=server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

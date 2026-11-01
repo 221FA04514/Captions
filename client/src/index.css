@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    background-color: #F7F8FA;
+    color: #20242C;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #DFE2E8 #F7F8FA;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #F7F8FA;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #DFE2E8;
+    border-radius: 3px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #C4C9D3;
+  }
+
+  /* Custom range input slider */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #E6E8ED;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6258D9;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  /* Telugu font rendering improvement */
+  .font-telugu {
+    font-family: 'Noto Sans Telugu', 'Nirmala UI', Arial, sans-serif;
+    font-feature-settings: "mark" 1, "mkmk" 1;
+  }
+}
+
+@layer components {
+  .panel {
+    background-color: #FFFFFF;
+    border: 1px solid #E6E8ED;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
+           bg-accent hover:bg-accent-hover active:bg-accent-active
+           text-white font-medium text-xs transition-colors shadow-subtle
+           focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1
+           disabled:opacity-40 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
+           bg-surface-50 hover:bg-surface-150 active:bg-surface-200
+           text-text-primary border border-border hover:border-border-strong
+           font-medium text-xs transition-colors shadow-subtle
+           focus:outline-none focus:ring-2 focus:ring-accent/40 focus:ring-offset-1
+           disabled:opacity-40 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md
+           text-text-secondary hover:text-text-primary hover:bg-surface-150 active:bg-surface-200
+           font-medium text-xs transition-colors
+           focus:outline-none focus:ring-2 focus:ring-accent/30
+           disabled:opacity-40 disabled:cursor-not-allowed select-none;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md
+           bg-status-error-bg hover:bg-red-100 text-status-error border border-red-200
+           font-medium text-xs transition-colors select-none;
+  }
+
+  .input-field {
+    @apply w-full bg-surface-50 border border-border rounded-md px-2.5 py-1.5 text-xs text-text-primary
+           placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent
+           transition-colors;
+  }
+
+  .label {
+    @apply text-[11px] font-semibold text-text-secondary uppercase tracking-wider mb-1 block select-none;
+  }
+}

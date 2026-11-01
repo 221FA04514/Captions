@@ -1,0 +1,29 @@
+# Node & Dependencies
+node_modules/
+dist/
+build/
+.cache/
+
+# Local Storage & Processed Media
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/exports/*
+!storage/exports/.gitkeep
+storage/temp/*
+!storage/temp/.gitkeep
+storage/projects/*
+!storage/projects/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# System & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

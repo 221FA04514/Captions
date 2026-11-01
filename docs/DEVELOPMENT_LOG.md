@@ -1,0 +1,93 @@
+# Development Log — Bujjigadu Subtitle Studio
+
+## Session 1: 2026-10-31
+- **Task 1: Environment & Repository Inspection**:
+  - Workspace directory `d:\E_backup\projects\AskBujjigadu\captions` verified empty.
+  - Initialized Git repository.
+  - Verified Node.js v24.16.0, npm 11.13.0, Git 2.54.0.
+  - Located system FFmpeg v8.1.1 and FFprobe v8.1.1 with `libass` at `C:\Program Files\Kdenlive\bin\`.
+  - Verified Windows system Telugu font support via `Nirmala.ttc` (`Nirmala UI`).
+- **Task 2: Architectural and Acceptance Test Documentation**:
+  - Authored `docs/PROJECT_PLAN.md` covering vision, stack justification, 3-phase roadmap, and Phase 1 tasks.
+  - Authored `docs/ARCHITECTURE.md` detailing client-server boundaries, ASS subtitle rendering consistency, data schemas, and API contracts.
+  - Authored `docs/PHASE_1_ACCEPTANCE_TESTS.md` specifying the 18 criteria, automated test strategy, and manual testing procedures.
+  - Established `docs/DEVELOPMENT_LOG.md`.
+
+## Session 2 & 3: 2026-10-31
+- **Shared Schemas & Presets**:
+  - `shared/types.ts`: Defined ProjectData, CaptionCue, SubtitleStyle, VideoMetadata, ExportJob, SubtitleValidationResult.
+  - `shared/presets.ts`: Implemented 6 distinct presets (Viral Shorts, Clean Educational, Telugu-English Mix, Podcast, Cinematic, Bujjigadu Signature).
+  - `shared/validators.ts`: Defined Zod schemas for runtime request verification and sanitization.
+- **Backend Implementation**:
+  - `server/src/utils/ffmpegDetector.ts`: System binary discovery and libass validation.
+  - `server/src/utils/pathSecurity.ts`: Path traversal protection using resolved relative paths.
+  - `server/src/services/videoService.ts`: FFprobe metadata extraction (dimensions, duration, fps, codec) and HTTP 206 partial streaming.
+  - `server/src/services/subtitleService.ts`: SRT and WebVTT parsers with Telugu Unicode preservation, validation rules (overlaps, out-of-bounds, empty cues), and ASS v4.00+ generator matching CSS live preview.
+  - `server/src/services/projectStore.ts`: Atomic JSON persistence in `storage/projects/`.
+  - `server/src/services/exportService.ts`: FFmpeg child process spawning with progress monitoring and cancel support.
+  - `server/src/controllers/`: Express controllers for projects, uploads, media streaming, and exports.
+  - `server/src/routes/api.ts` & `server/src/app.ts`: REST API wiring and error middleware.
+- **Frontend Implementation**:
+  - `client/src/services/api.ts`: Typed API client for projects, file uploads, media, and export jobs.
+  - `client/src/context/AppContext.tsx`: Centralized state management using `useReducer` and React Context.
+  - `client/src/components/Dashboard.tsx`: Project list, creation modal, and metadata display.
+  - `client/src/components/EditorToolbar.tsx`: Top bar with video/subtitle drag-and-drop uploaders, project save, and export button with progress tracker.
+  - `client/src/components/CaptionList.tsx`: Left panel with searchable caption list, timestamp inline editors, add/delete cue buttons, and global offset adjuster.
+  - `client/src/components/VideoPlayer.tsx` & `SubtitleOverlay.tsx`: Center panel with HTML5 video player, custom controls, and live CSS subtitle preview matching ASS output.
+  - `client/src/components/StylePanel.tsx`: Right panel with preset selector and tabs for typography, colors, background boxes, and positioning.
+  - `client/src/components/NotificationToasts.tsx`: Floating toast notification system for errors, warnings, and success feedback.
+- **Testing & Verification**:
+  - `server/tests/subtitleService.test.ts`: 44 unit tests for SRT/VTT parsing, Telugu Unicode, timestamp conversions, offsets, and ASS generation (100% pass).
+  - `server/tests/api.test.ts`: 15 integration tests for project CRUD, uploads, streaming security, and export endpoints (100% pass).
+  - Verified TypeScript compilation for both workspaces: `npm run build` succeeds cleanly for server and client.
+
+## Sprint: Editor Preview & Subtitle Experience Upgrade (2026-11-01)
+- **Task P0 — Fixed Video Preview Geometry & Aspect Ratio**:
+  - Identified root cause: SubtitleOverlay was positioned inside the outer full-width flex container rather than a dedicated video-frame container, and font size was scaled with `vw` (viewport width) instead of rendered video frame height.
+  - Implemented dynamic aspect-ratio container with `ResizeObserver` in `VideoPlayer.tsx` that strictly bounds both `<video>` and `<SubtitleOverlay>` to the exact active video frame (supporting 9:16 portrait, 16:9 landscape, 1:1 square).
+  - Subtitle font size now calculates as `(style.fontSize / 1080) * renderedFrameHeight`, achieving mathematical parity with FFmpeg's `libass` renderer (`PlayResY: 1080`).
+- **Task P1 — Draggable Font-Size Slider**:
+  - Added range slider (12px to 140px) with live preview updates, direct numeric input, and a one-click Reset to Preset Default button.
+- **Task P1 — Styling Scope (Apply to All vs. Apply to Selected)**:
+  - Added `stylingScope` state selector.
+  - Extended data model backward-compatibly with `styleOverride?: Partial<SubtitleStyle>` in `CaptionCue`.
+  - When "Selected" is active, style changes modify only the active cue's `styleOverride` (preserving caption text and timestamps).
+  - When "All" is active, style changes update `project.style` and clear per-cue overrides across all captions.
+  - ASS export generator outputs inline style overrides (`\fs`, `\c`, `\3c`, `\bord`) for cues with custom styles.
+- **Task P1 — Visual Subtitle Timeline**:
+  - Added `client/src/components/Timeline.tsx` below the video preview with time ruler, caption blocks, active playhead line, and zoom controls (Zoom In, Zoom Out, Fit).
+  - Integrated full bidirectional playback seeking: clicking ruler/blocks seeks the video, and playing scrubs the timeline.
+  - Implemented caption dragging (adjusts cue start/end simultaneously preserving duration) and edge trimming (left handle adjusts start time, right handle adjusts end time) with boundary clamping.
+- **Task P1 — Current-Word Multicolor Highlighting (Karaoke)**:
+  - Created `shared/wordTiming.ts`: Implemented `getCueWords` with character-weighted proportional word duration estimation marked as estimated (`isEstimated: true`), and explicit word timestamp support.
+  - Implemented live preview word highlight tracking (`karaoke-highlight`, `word-pop`, `rainbow`, `typewriter`) in `SubtitleOverlay.tsx`.
+  - Enhanced `generateAssScript` to output timed word-level dialogue slices with ASS color override tags (`\c&H...&`) for 100% export parity across standard media players.
+- **Task P2 — Expanded Preset Library (13 Total Presets)**:
+  - Added 7 new distinctive presets: Rainbow Karaoke, Active Word Pop, Yellow Punch, Bujjigadu Comedy, Neon Glow, Typewriter, and Two-Line Cinema.
+- **Automated Verification**:
+  - Created `server/tests/sprintImprovements.test.ts` (23 tests).
+  - Full automated suite: 82 tests passing (100% success rate across 3 test suites).
+  - Monorepo production build verified cleanly with Vite and TypeScript.
+
+## Sprint: Complete UI/UX Redesign — Professional Minimal Video Editor (2026-11-01)
+- **Design Overhaul to Light Neutral System**:
+  - Replaced dark neon aesthetics with professional Descript/Linear-inspired light neutral palette (`#F7F8FA` application canvas, `#FFFFFF` panels, `#20242C` primary text, `#737B89` secondary text, `#E6E8ED` borders, `#6258D9` brand accent).
+  - Configured crisp typography (Inter, JetBrains Mono) and subtle hairline borders with restrained shadows.
+- **Top Application Bar**:
+  - Compact 48px header with subtle Bujjigadu wordmark, breadcrumb-style editable project title, real-time save status badge, quick video/subtitle import indicators, and prominent Save & Export buttons with progress modal.
+- **Left Captions Sidebar**:
+  - Clean script-style list with caption count badge, search filter, and instant "+ Add" button.
+  - Compact rows with subtle hover actions (delete on hover, click to seek, double-click to edit text/time, active purple accent indicator).
+  - Collapsible footer for global timing offset adjustment.
+- **Center Video Preview & Playback**:
+  - Distraction-free preview canvas with aspect-ratio-bound video container (16:9, 9:16, 1:1) and drag-and-drop video import zone.
+  - Dedicated playback strip directly beneath: Previous Cue, Play/Pause, Next Cue, Monospace Time Display, Duration, Aspect Pill, and Volume Toggle.
+- **Right Properties Inspector**:
+  - Clean collapsible accordion sections: Apply Scope (All vs. Selected), 13 compact preset tiles with realistic subtitle sample boxes, Typography (font, draggable size slider + numeric input + reset, weight segmented buttons, spacing, caps), Animation (Karaoke, Pop, Rainbow, Typewriter), Colors & Stroke, Background Box, and Position & Alignment.
+- **Bottom Timeline**:
+  - Compact professional timeline with time ruler ticks, styled caption clips, active `#6258D9` playhead line, bidirectional scrub/seeking, clip moving, and edge trimming.
+- **Projects Dashboard**:
+  - Minimalist project management interface with search, project metadata table, and lightweight creation modal.
+- **Verification**:
+  - 82/82 automated tests passing.
+  - Production build compiled with zero errors across all workspaces.

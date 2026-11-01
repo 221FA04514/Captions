@@ -1,0 +1,12 @@
+node_modules
+dist
+client/dist
+server/dist
+server/storage/temp
+server/storage/uploads
+server/storage/exports
+.git
+.gemini
+.vscode
+*.log
+

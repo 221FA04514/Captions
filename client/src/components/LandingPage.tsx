@@ -32,9 +32,13 @@ export default function LandingPage({ onVideoReady }: LandingPageProps) {
 
     try {
       setUploading(true);
-      setProgressStage('Uploading and inspecting video...');
+      setProgressStage('Preparing instant preview...');
+
+      const localUrl = URL.createObjectURL(file);
+      dispatch({ type: 'SET_LOCAL_VIDEO', payload: { file, url: localUrl } });
 
       // 1. Upload video to get metadata
+      setProgressStage('Syncing video with workspace...');
       const metadata = await api.upload.video(file);
 
       // 2. Create instant editing project session

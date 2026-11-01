@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 export interface AppState {
   project: ProjectData | null;
   projectDirty: boolean;
+  localVideoFile: File | null;
+  localVideoUrl: string | null;
   currentTime: number;       // video playback position in seconds
   seekTarget: number | null; // requested seek timestamp
   activeCueId: string | null;
@@ -25,6 +27,8 @@ export interface Notification {
 const initialState: AppState = {
   project: null,
   projectDirty: false,
+  localVideoFile: null,
+  localVideoUrl: null,
   currentTime: 0,
   seekTarget: null,
   activeCueId: null,
@@ -37,6 +41,8 @@ const initialState: AppState = {
 // ----- Actions -----
 type Action =
   | { type: 'SET_PROJECT'; payload: ProjectData }
+  | { type: 'SET_LOCAL_VIDEO'; payload: { file: File; url: string } }
+  | { type: 'CLEAR_LOCAL_VIDEO' }
   | { type: 'UPDATE_VIDEO'; payload: VideoMetadata }
   | { type: 'SET_CAPTIONS'; payload: CaptionCue[] }
   | { type: 'ADD_CAPTION'; payload: CaptionCue }
@@ -60,6 +66,20 @@ function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'SET_PROJECT':
       return { ...state, project: action.payload, projectDirty: false };
+
+    case 'SET_LOCAL_VIDEO':
+      return {
+        ...state,
+        localVideoFile: action.payload.file,
+        localVideoUrl: action.payload.url,
+      };
+
+    case 'CLEAR_LOCAL_VIDEO':
+      return {
+        ...state,
+        localVideoFile: null,
+        localVideoUrl: null,
+      };
 
     case 'UPDATE_VIDEO':
       if (!state.project) return state;

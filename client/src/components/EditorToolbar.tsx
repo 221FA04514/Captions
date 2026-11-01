@@ -56,7 +56,9 @@ export default function EditorToolbar({ onBack }: EditorToolbarProps) {
     if (!file) return;
     try {
       setUploadingVideo(true);
-      notify('info', `Uploading video "${file.name}"...`);
+      const localUrl = URL.createObjectURL(file);
+      dispatch({ type: 'SET_LOCAL_VIDEO', payload: { file, url: localUrl } });
+      notify('info', `Syncing video "${file.name}"...`);
       const metadata = await api.upload.video(file);
       dispatch({ type: 'UPDATE_VIDEO', payload: metadata });
       notify('success', `Video loaded: ${metadata.width}×${metadata.height} (${Math.round(metadata.duration)}s)`);
@@ -102,7 +104,28 @@ export default function EditorToolbar({ onBack }: EditorToolbarProps) {
 
       dispatch({ type: 'SET_IS_EXPORTING', payload: true });
       setShowExportModal(true);
-      const job = await api.export.start(project.id);
+
+      let job;
+      try {
+        job = await api.export.start(project.id);
+      } catch (err: any) {
+        if (err.message?.includes('Source video not found on disk') && state.localVideoFile) {
+          notify('info', 'Re-syncing source video with server before render...');
+          const newMetadata = await api.upload.video(state.localVideoFile);
+          const updatedProject = { ...project, video: newMetadata };
+          await api.projects.update(project.id, updatedProject);
+          dispatch({ type: 'UPDATE_VIDEO', payload: newMetadata });
+          job = await api.export.start(project.id);
+        } else if (err.message?.includes('Source video not found on disk')) {
+          notify('error', 'Server storage was reset. Please click "Replace Video" in the toolbar to re-select your video, then export.');
+          dispatch({ type: 'SET_IS_EXPORTING', payload: false });
+          setShowExportModal(false);
+          return;
+        } else {
+          throw err;
+        }
+      }
+
       dispatch({ type: 'SET_EXPORT_JOB', payload: job });
 
       // Poll until completion

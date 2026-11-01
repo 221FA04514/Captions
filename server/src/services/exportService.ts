@@ -66,9 +66,26 @@ export class ExportService {
     const { ffmpegPath } = detectFfmpeg();
     const jobId = uuidv4();
     const videoDuration = project.video.duration || 10;
-    const inputVideoPath = path.resolve(config.storage.uploads, project.video.filename);
 
-    if (!fs.existsSync(inputVideoPath)) {
+    // Check all possible storage locations for the uploaded video file
+    const candidatePaths = [
+      path.resolve(config.storage.uploads, project.video.filename),
+      path.resolve(config.storage.temp, project.video.filename),
+      path.resolve(config.storage.base, 'uploads', project.video.filename),
+      path.resolve(process.cwd(), 'storage/uploads', project.video.filename),
+      path.resolve(config.rootDir, 'storage/uploads', project.video.filename),
+    ];
+
+    let inputVideoPath = candidatePaths.find((p) => fs.existsSync(p));
+    if (!inputVideoPath && fs.existsSync(config.storage.uploads)) {
+      try {
+        const files = fs.readdirSync(config.storage.uploads);
+        const match = files.find((f) => f.toLowerCase() === project.video?.filename.toLowerCase());
+        if (match) inputVideoPath = path.join(config.storage.uploads, match);
+      } catch {}
+    }
+
+    if (!inputVideoPath || !fs.existsSync(inputVideoPath)) {
       throw new Error(`Source video not found on disk: ${project.video.filename}`);
     }
 
@@ -108,6 +125,9 @@ export class ExportService {
     // Escaped relative path for filter syntax
     const assFilter = `ass=${relativeAssName}`;
 
+    // Memory- and CPU-optimized arguments for low-resource cloud environments (Render Free Tier 512MB RAM)
+    const encoderPreset = process.env.NODE_ENV === 'production' ? 'ultrafast' : (project.exportSettings.preset || 'fast');
+
     const ffmpegArgs = [
       '-y',
       '-i',
@@ -117,9 +137,15 @@ export class ExportService {
       '-c:v',
       'libx264',
       '-preset',
-      project.exportSettings.preset || 'fast',
+      encoderPreset,
       '-crf',
       String(project.exportSettings.crf ?? 22),
+      '-threads',
+      '2',
+      '-max_muxing_queue_size',
+      '1024',
+      '-bufsize',
+      '2048k',
     ];
 
     if (project.video.hasAudio) {

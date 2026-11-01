@@ -35,7 +35,7 @@ export default function VideoPlayer() {
     height: 360,
   });
 
-  const videoSrc = project?.video ? api.media.videoUrl(project.video.filename) : null;
+  const videoSrc = state.localVideoUrl || (project?.video ? api.media.videoUrl(project.video.filename) : null);
   const naturalWidth = project?.video?.width || (videoRef.current?.videoWidth || 1920);
   const naturalHeight = project?.video?.height || (videoRef.current?.videoHeight || 1080);
   const aspectRatio = naturalWidth / naturalHeight;
@@ -181,7 +181,9 @@ export default function VideoPlayer() {
   const processVideoFile = async (file: File) => {
     try {
       setUploading(true);
-      notify('info', `Uploading "${file.name}"...`);
+      const localUrl = URL.createObjectURL(file);
+      dispatch({ type: 'SET_LOCAL_VIDEO', payload: { file, url: localUrl } });
+      notify('info', `Syncing "${file.name}"...`);
       const metadata = await api.upload.video(file);
       dispatch({ type: 'UPDATE_VIDEO', payload: metadata });
       notify('success', `Video ready: ${metadata.width}×${metadata.height}`);
